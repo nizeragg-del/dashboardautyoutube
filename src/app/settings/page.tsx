@@ -76,8 +76,9 @@ export default function SettingsPage() {
 
             if (error) throw error;
             alert('Configurações salvas com sucesso!');
-        } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : String(error);
+        } catch (error: any) {
+            console.error("Erro detalhado:", error);
+            const message = error?.message || error?.error_description || JSON.stringify(error);
             alert('Erro ao salvar: ' + message);
         } finally {
             setLoading(false);
