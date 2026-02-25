@@ -3,9 +3,14 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from "next/navigation";
 
+interface User {
+    id: string;
+    email?: string;
+}
+
 export default function SettingsPage() {
     const [loading, setLoading] = useState(false);
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [keys, setKeys] = useState({
         gemini: '',
         elevenlabs: '',
@@ -71,8 +76,9 @@ export default function SettingsPage() {
 
             if (error) throw error;
             alert('Configurações salvas com sucesso!');
-        } catch (error: any) {
-            alert('Erro ao salvar: ' + error.message);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            alert('Erro ao salvar: ' + message);
         } finally {
             setLoading(false);
         }

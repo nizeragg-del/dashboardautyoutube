@@ -3,18 +3,31 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from "next/navigation";
 
+interface User {
+  id: string;
+  email?: string;
+}
+
+interface Video {
+  id: string;
+  title: string;
+  status: string;
+  theme?: string;
+  created_at?: string;
+}
+
 export default function DashboardHome() {
   const [idea, setIdea] = useState('');
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState([
     { label: 'Vídeos Gerados', value: '0', icon: '📽️' },
     { label: 'Visualizações Est.', value: '0', icon: '📈' },
     { label: 'Agendados', value: '0', icon: '📅' },
     { label: 'Créditos API', value: 'Infinity', icon: '♾️' },
   ]);
-  const [recentVideos, setRecentVideos] = useState<any[]>([]);
+  const [recentVideos, setRecentVideos] = useState<Video[]>([]);
   const router = useRouter();
 
   const fetchDashboardData = useCallback(async (userId: string) => {
@@ -90,13 +103,11 @@ export default function DashboardHome() {
       }
 
       // 2. Inserir registro de vídeo pendente
-      const { data: newVideo, error: videoError } = await supabase
+      const { error: videoError } = await supabase
         .from('videos')
         .insert([
           { user_id: user.id, title: idea, status: 'pending', theme: 'História Curta' }
-        ])
-        .select()
-        .single();
+        ]);
 
       if (videoError) throw videoError;
 
@@ -134,8 +145,9 @@ export default function DashboardHome() {
       alert('🚀 Motor disparado no GitHub Actions! O vídeo estará pronto em alguns minutos.');
       setIdea('');
       fetchDashboardData(user.id); // Atualiza lista
-    } catch (error: any) {
-      alert('Erro: ' + error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      alert('Erro: ' + message);
     } finally {
       setLoading(false);
     }
