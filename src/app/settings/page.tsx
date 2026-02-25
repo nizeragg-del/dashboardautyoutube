@@ -223,7 +223,7 @@ export default function SettingsPage() {
                                 onChange={(e) => setKeys({ ...keys, voice_id: e.target.value })}
                             >
                                 <option value="pqHfZKP75CvOlQylNhV4">Bill (Sábio/Maduro)</option>
-                                <option value="onwK4e9ZLuTAKqD09mOe">Narrador Padrão</option>
+                                <option value="pNInz6obpgdqG0uD9nnd">Narrador Padrão (Adam)</option>
                             </select>
                         </div>
 
