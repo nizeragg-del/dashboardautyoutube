@@ -7,7 +7,7 @@ interface Video {
     title: string;
     created_at: string;
     status: string;
-    [key: string]: any; // Permite outras propriedades sem erro de tipo básico
+    [key: string]: unknown;
 }
 
 export default function VideosPage() {
