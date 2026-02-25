@@ -57,8 +57,9 @@ export default function DashboardHome() {
 
       alert('🚀 Motor disparado no GitHub Actions! O vídeo estará pronto em alguns minutos.');
       setIdea('');
-    } catch (error: any) {
-      alert('Erro: ' + error.message);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      alert('Erro: ' + message);
     } finally {
       setLoading(false);
     }

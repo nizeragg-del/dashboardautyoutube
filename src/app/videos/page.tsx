@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
 export default function VideosPage() {
-    const [videos, setVideos] = useState<any[]>([]);
+    const [videos, setVideos] = useState<Record<string, any>[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchVideos() {
-            const { data, error } = await supabase.from('videos').select('*').order('created_at', { ascending: false });
+            const { data } = await supabase.from('videos').select('*').order('created_at', { ascending: false });
             if (data) setVideos(data);
             setLoading(false);
         }

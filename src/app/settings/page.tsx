@@ -20,7 +20,7 @@ export default function SettingsPage() {
     useEffect(() => {
         async function loadProfile() {
             // Nota: Em produção, usaríamos auth.getUser()
-            const { data, error } = await supabase.from('profiles').select('*').limit(1).single();
+            const { data } = await supabase.from('profiles').select('*').limit(1).single();
             if (data) {
                 setKeys({
                     gemini: data.gemini_api_key || '',
@@ -59,8 +59,9 @@ export default function SettingsPage() {
                 if (error) throw error;
                 alert('Configurações salvas com sucesso!');
             }
-        } catch (error: any) {
-            alert('Erro ao salvar: ' + error.message);
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : String(error);
+            alert('Erro ao salvar: ' + message);
         } finally {
             setLoading(false);
         }

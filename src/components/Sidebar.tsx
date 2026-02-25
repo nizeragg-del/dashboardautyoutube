@@ -35,7 +35,7 @@ const Sidebar = () => {
 
             <div className="mt-auto p-4 glass text-xs text-zinc-500">
                 <p>Premium SaaS v1.0</p>
-                <p>© Nizera's Org</p>
+                <p>© Nizera&apos;s Org</p>
             </div>
         </div>
     );
