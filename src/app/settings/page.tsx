@@ -1,11 +1,23 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from "next/navigation";
 
 interface User {
     id: string;
     email?: string;
+}
+
+interface Profile {
+    gemini_api_key?: string;
+    elevenlabs_api_key?: string;
+    huggingface_api_key?: string;
+    preferred_voice_id?: string;
+    github_token?: string;
+    github_repo?: string;
+    yt_client_id?: string;
+    yt_client_secret?: string;
+    yt_refresh_token?: string;
 }
 
 export default function SettingsPage() {
@@ -40,16 +52,17 @@ export default function SettingsPage() {
                 .single();
 
             if (data) {
+                const profile = data as Profile;
                 setKeys({
-                    gemini: data.gemini_api_key || '',
-                    elevenlabs: data.elevenlabs_api_key || '',
-                    huggingface: data.huggingface_api_key || '',
-                    voice_id: data.preferred_voice_id || 'pqHfZKP75CvOlQylNhV4',
-                    github_token: data.github_token || '',
-                    github_repo: data.github_repo || '',
-                    yt_client_id: data.yt_client_id || '',
-                    yt_client_secret: data.yt_client_secret || '',
-                    yt_refresh_token: data.yt_refresh_token || '',
+                    gemini: profile.gemini_api_key || '',
+                    elevenlabs: profile.elevenlabs_api_key || '',
+                    huggingface: profile.huggingface_api_key || '',
+                    voice_id: profile.preferred_voice_id || 'pqHfZKP75CvOlQylNhV4',
+                    github_token: profile.github_token || '',
+                    github_repo: profile.github_repo || '',
+                    yt_client_id: profile.yt_client_id || '',
+                    yt_client_secret: profile.yt_client_secret || '',
+                    yt_refresh_token: profile.yt_refresh_token || '',
                 });
             }
         }
@@ -93,6 +106,15 @@ export default function SettingsPage() {
         }
     };
 
+    const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const { name, value } = e.target;
+        setKeys(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
+        setKeys(prev => ({ ...prev, voice_id: e.target.value }));
+    };
+
     return (
         <div className="max-w-4xl mx-auto flex flex-col gap-8">
             <div>
@@ -111,30 +133,33 @@ export default function SettingsPage() {
                         <div>
                             <label className="text-sm text-zinc-500 mb-1 block">Gemini API Key</label>
                             <input
+                                name="gemini"
                                 type="password"
                                 className="input-field"
                                 value={keys.gemini}
-                                onChange={(e) => setKeys({ ...keys, gemini: e.target.value })}
+                                onChange={handleInputChange}
                                 placeholder="sk-..."
                             />
                         </div>
                         <div>
                             <label className="text-sm text-zinc-500 mb-1 block">ElevenLabs API Key</label>
                             <input
+                                name="elevenlabs"
                                 type="password"
                                 className="input-field"
                                 value={keys.elevenlabs}
-                                onChange={(e) => setKeys({ ...keys, elevenlabs: e.target.value })}
+                                onChange={handleInputChange}
                                 placeholder="eleven_..."
                             />
                         </div>
                         <div>
                             <label className="text-sm text-zinc-500 mb-1 block">Hugging Face Token</label>
                             <input
+                                name="huggingface"
                                 type="password"
                                 className="input-field"
                                 value={keys.huggingface}
-                                onChange={(e) => setKeys({ ...keys, huggingface: e.target.value })}
+                                onChange={handleInputChange}
                                 placeholder="hf_..."
                             />
                         </div>
@@ -151,20 +176,22 @@ export default function SettingsPage() {
                         <div>
                             <label className="text-sm text-zinc-500 mb-1 block">GitHub Personal Access Token (PAT)</label>
                             <input
+                                name="github_token"
                                 type="password"
                                 className="input-field"
                                 value={keys.github_token}
-                                onChange={(e) => setKeys({ ...keys, github_token: e.target.value })}
+                                onChange={handleInputChange}
                                 placeholder="ghp_..."
                             />
                         </div>
                         <div>
                             <label className="text-sm text-zinc-500 mb-1 block">Repositório (usuário/repo)</label>
                             <input
+                                name="github_repo"
                                 type="text"
                                 className="input-field"
                                 value={keys.github_repo}
-                                onChange={(e) => setKeys({ ...keys, github_repo: e.target.value })}
+                                onChange={handleInputChange}
                                 placeholder="nizera/viral-engine"
                             />
                         </div>
@@ -181,28 +208,31 @@ export default function SettingsPage() {
                         <div>
                             <label className="text-sm text-zinc-500 mb-1 block">YouTube Client ID</label>
                             <input
+                                name="yt_client_id"
                                 type="text"
                                 className="input-field"
                                 value={keys.yt_client_id}
-                                onChange={(e) => setKeys({ ...keys, yt_client_id: e.target.value })}
+                                onChange={handleInputChange}
                             />
                         </div>
                         <div>
                             <label className="text-sm text-zinc-500 mb-1 block">YouTube Client Secret</label>
                             <input
+                                name="yt_client_secret"
                                 type="password"
                                 className="input-field"
                                 value={keys.yt_client_secret}
-                                onChange={(e) => setKeys({ ...keys, yt_client_secret: e.target.value })}
+                                onChange={handleInputChange}
                             />
                         </div>
                         <div>
                             <label className="text-sm text-zinc-500 mb-1 block">YouTube Refresh Token</label>
                             <input
+                                name="yt_refresh_token"
                                 type="password"
                                 className="input-field"
                                 value={keys.yt_refresh_token}
-                                onChange={(e) => setKeys({ ...keys, yt_refresh_token: e.target.value })}
+                                onChange={handleInputChange}
                             />
                         </div>
                     </div>
@@ -220,7 +250,7 @@ export default function SettingsPage() {
                             <select
                                 className="input-field bg-zinc-900"
                                 value={keys.voice_id}
-                                onChange={(e) => setKeys({ ...keys, voice_id: e.target.value })}
+                                onChange={handleSelectChange}
                             >
                                 <option value="pqHfZKP75CvOlQylNhV4">Bill (Sábio/Maduro)</option>
                                 <option value="pNInz6obpgdqG0uD9nnd">Narrador Padrão (Adam)</option>
