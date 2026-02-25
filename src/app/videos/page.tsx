@@ -2,14 +2,22 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
+interface Video {
+    id: string;
+    title: string;
+    created_at: string;
+    status: string;
+    [key: string]: any; // Permite outras propriedades sem erro de tipo básico
+}
+
 export default function VideosPage() {
-    const [videos, setVideos] = useState<Record<string, any>[]>([]);
+    const [videos, setVideos] = useState<Video[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function fetchVideos() {
             const { data } = await supabase.from('videos').select('*').order('created_at', { ascending: false });
-            if (data) setVideos(data);
+            if (data) setVideos(data as Video[]);
             setLoading(false);
         }
         fetchVideos();
