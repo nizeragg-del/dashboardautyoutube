@@ -82,7 +82,8 @@ export default function SettingsPage() {
             if (error instanceof Error) {
                 message = error.message;
             } else if (typeof error === 'object' && error !== null) {
-                message = (error as any).message || (error as any).error_description || JSON.stringify(error);
+                const errObj = error as Record<string, unknown>;
+                message = String(errObj.message || errObj.error_description || JSON.stringify(error));
             } else {
                 message = String(error);
             }
