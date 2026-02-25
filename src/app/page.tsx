@@ -1,34 +1,110 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useRouter } from "next/navigation";
 
 export default function DashboardHome() {
   const [idea, setIdea] = useState('');
   const [loading, setLoading] = useState(false);
-  const [stats] = useState([
-    { label: 'Vídeos Gerados', value: '12', icon: '📽️' },
-    { label: 'Visualizações Est.', value: '14.2k', icon: '📈' },
-    { label: 'Agendados', value: '3', icon: '📅' },
+  const [dataLoading, setDataLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [stats, setStats] = useState([
+    { label: 'Vídeos Gerados', value: '0', icon: '📽️' },
+    { label: 'Visualizações Est.', value: '0', icon: '📈' },
+    { label: 'Agendados', value: '0', icon: '📅' },
     { label: 'Créditos API', value: 'Infinity', icon: '♾️' },
   ]);
+  const [recentVideos, setRecentVideos] = useState<any[]>([]);
+  const router = useRouter();
+
+  const fetchDashboardData = useCallback(async (userId: string) => {
+    setDataLoading(true);
+    try {
+      // 1. Contar vídeos gerados
+      const { count: videoCount } = await supabase
+        .from('videos')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      // 2. Contar agendamentos
+      const { count: scheduleCount } = await supabase
+        .from('schedules')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('status', 'scheduled');
+
+      // 3. Buscar vídeos recentes
+      const { data: videos } = await supabase
+        .from('videos')
+        .order('created_at', { ascending: false })
+        .eq('user_id', userId)
+        .limit(3);
+
+      setStats([
+        { label: 'Vídeos Gerados', value: (videoCount || 0).toString(), icon: '📽️' },
+        { label: 'Visualizações Est.', value: '0', icon: '📈' }, // Placeholder por enquanto
+        { label: 'Agendados', value: (scheduleCount || 0).toString(), icon: '📅' },
+        { label: 'Créditos API', value: 'Infinity', icon: '♾️' },
+      ]);
+
+      if (videos) setRecentVideos(videos);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+    } finally {
+      setDataLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+      } else {
+        setUser(session.user);
+        fetchDashboardData(session.user.id);
+      }
+    };
+    checkUser();
+  }, [router, fetchDashboardData]);
 
   const handleGenerate = async () => {
     if (!idea) return alert('Digite uma ideia primeiro!');
+    if (!user) return alert('Você precisa estar logado.');
     setLoading(true);
 
     try {
-      // 1. Buscar chaves do banco (Sempre o primeiro profile para o MVP)
-      const { data: profile, error: profileError } = await supabase.from('profiles').select('*').limit(1).single();
+      // 1. Buscar perfil para pegar chaves e repo
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-      if (profileError || !profile) {
+      if (profileError || !profile || !profile.gemini_api_key) {
         throw new Error('Configure suas chaves nas Configurações primeiro.');
       }
 
-      // 2. Disparar GitHub Action
-      const [owner, repo] = profile.github_repo.split('/');
+      if (!profile.github_token || !profile.github_repo) {
+        throw new Error('Configure seu Token e Repositório do GitHub nas Configurações.');
+      }
+
+      // 2. Inserir registro de vídeo pendente
+      const { data: newVideo, error: videoError } = await supabase
+        .from('videos')
+        .insert([
+          { user_id: user.id, title: idea, status: 'pending', theme: 'História Curta' }
+        ])
+        .select()
+        .single();
+
+      if (videoError) throw videoError;
+
+      // 3. Disparar GitHub Action
+      const repoPath = profile.github_repo;
       const GITHUB_TOKEN = profile.github_token;
 
-      const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/actions/workflows/viral_generate.yml/dispatches`, {
+      const response = await fetch(`https://api.github.com/repos/${repoPath}/actions/workflows/viral_generate.yml/dispatches`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${GITHUB_TOKEN}`,
@@ -36,13 +112,13 @@ export default function DashboardHome() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ref: 'main', // Ou a branch padrão
+          ref: 'main',
           inputs: {
             idea: idea,
             gemini_key: profile.gemini_api_key,
             hf_key: profile.huggingface_api_key,
             elevenlabs_key: profile.elevenlabs_api_key,
-            voice_id: profile.preferred_voice_id,
+            voice_id: profile.preferred_voice_id || 'pqHfZKP75CvOlQylNhV4',
             yt_client_id: profile.yt_client_id,
             yt_client_secret: profile.yt_client_secret,
             yt_refresh_token: profile.yt_refresh_token,
@@ -57,24 +133,32 @@ export default function DashboardHome() {
 
       alert('🚀 Motor disparado no GitHub Actions! O vídeo estará pronto em alguns minutos.');
       setIdea('');
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : String(error);
-      alert('Erro: ' + message);
+      fetchDashboardData(user.id); // Atualiza lista
+    } catch (error: any) {
+      alert('Erro: ' + error.message);
     } finally {
       setLoading(false);
     }
   };
+
+  if (dataLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-10">
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold">Bem-vindo, Criador 🚀</h1>
+          <h1 className="text-4xl font-bold">Bem-vindo, {user?.email?.split('@')[0]} 🚀</h1>
           <p className="text-zinc-400 mt-1">Sua fábrica de virais está pronta para rodar.</p>
         </div>
-        <button className="btn-primary flex items-center gap-2">
-          <span>+</span> Novo Vídeo
+        <button className="btn-primary flex items-center gap-2" onClick={() => router.push('/settings')}>
+          <span>⚙️</span> Configurações
         </button>
       </div>
 
@@ -102,7 +186,7 @@ export default function DashboardHome() {
               onChange={(e) => setIdea(e.target.value)}
             />
             <div className="flex gap-4">
-              <select className="input-field max-w-[200px] bg-zinc-900">
+              <select className="input-field max-w-[200px] bg-zinc-900 border-zinc-800 text-white">
                 <option>História Curta</option>
                 <option>Curiosidade Nerd</option>
                 <option>Motivação Épica</option>
@@ -112,7 +196,7 @@ export default function DashboardHome() {
                 disabled={loading}
                 className="btn-primary flex-1"
               >
-                {loading ? 'Iniciando Cloud...' : 'Disparar Motor 🔥'}
+                {loading ? 'Disparando...' : 'Disparar Motor 🔥'}
               </button>
             </div>
           </div>
@@ -122,18 +206,22 @@ export default function DashboardHome() {
         <div className="glass p-8 flex flex-col gap-6">
           <h2 className="text-xl font-bold">Atividade Recente</h2>
           <div className="flex flex-col gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-4 p-3 hover:bg-zinc-900 rounded-lg transition-all cursor-pointer">
+            {recentVideos.length > 0 ? recentVideos.map((video, i) => (
+              <div key={video.id} className="flex items-center gap-4 p-3 hover:bg-zinc-900 rounded-lg transition-all cursor-pointer">
                 <div className="w-12 h-12 bg-zinc-800 rounded-md flex items-center justify-center font-bold text-zinc-600">
-                  {i}
+                  {i + 1}
                 </div>
                 <div>
-                  <div className="font-medium text-sm">Mistério do Voo MH{120 + i}</div>
-                  <div className="text-xs text-green-500">Concluído • Há {i}h</div>
+                  <div className="font-medium text-sm truncate max-w-[150px]">{video.title}</div>
+                  <div className={`text-xs ${video.status === 'completed' ? 'text-green-500' : 'text-yellow-500'}`}>
+                    {video.status === 'completed' ? 'Concluído' : 'Processando'}
+                  </div>
                 </div>
               </div>
-            ))}
-            <button className="text-blue-500 text-sm hover:underline mt-2">
+            )) : (
+              <p className="text-zinc-500 text-sm">Nenhum vídeo gerado ainda.</p>
+            )}
+            <button className="text-blue-500 text-sm hover:underline mt-2" onClick={() => router.push('/videos')}>
               Ver todo o histórico →
             </button>
           </div>
@@ -142,3 +230,4 @@ export default function DashboardHome() {
     </div>
   );
 }
+

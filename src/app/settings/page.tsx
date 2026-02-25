@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
     const [loading, setLoading] = useState(false);
+    const [user, setUser] = useState<any>(null);
     const [keys, setKeys] = useState({
         gemini: '',
         elevenlabs: '',
@@ -15,12 +17,23 @@ export default function SettingsPage() {
         yt_client_secret: '',
         yt_refresh_token: '',
     });
+    const router = useRouter();
 
-    // Carregar dados existentes (Mockando usuário por enquanto)
     useEffect(() => {
         async function loadProfile() {
-            // Nota: Em produção, usaríamos auth.getUser()
-            const { data } = await supabase.from('profiles').select('*').limit(1).single();
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                router.push("/login");
+                return;
+            }
+            setUser(session.user);
+
+            const { data } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
             if (data) {
                 setKeys({
                     gemini: data.gemini_api_key || '',
@@ -36,32 +49,30 @@ export default function SettingsPage() {
             }
         }
         loadProfile();
-    }, []);
+    }, [router]);
 
     const saveSettings = async () => {
+        if (!user) return;
         setLoading(true);
         try {
-            // Mock: Atualizando o primeiro perfil encontrado para demonstração
-            const { data: profiles } = await supabase.from('profiles').select('id').limit(1);
-            if (profiles && profiles.length > 0) {
-                const { error } = await supabase.from('profiles').update({
-                    gemini_api_key: keys.gemini,
-                    elevenlabs_api_key: keys.elevenlabs,
-                    huggingface_api_key: keys.huggingface,
-                    preferred_voice_id: keys.voice_id,
-                    github_token: keys.github_token,
-                    github_repo: keys.github_repo,
-                    yt_client_id: keys.yt_client_id,
-                    yt_client_secret: keys.yt_client_secret,
-                    yt_refresh_token: keys.yt_refresh_token,
-                }).eq('id', profiles[0].id);
+            const { error } = await supabase.from('profiles').upsert({
+                id: user.id,
+                gemini_api_key: keys.gemini,
+                elevenlabs_api_key: keys.elevenlabs,
+                huggingface_api_key: keys.huggingface,
+                preferred_voice_id: keys.voice_id,
+                github_token: keys.github_token,
+                github_repo: keys.github_repo,
+                yt_client_id: keys.yt_client_id,
+                yt_client_secret: keys.yt_client_secret,
+                yt_refresh_token: keys.yt_refresh_token,
+                updated_at: new Date().toISOString(),
+            });
 
-                if (error) throw error;
-                alert('Configurações salvas com sucesso!');
-            }
-        } catch (error: unknown) {
-            const message = error instanceof Error ? error.message : String(error);
-            alert('Erro ao salvar: ' + message);
+            if (error) throw error;
+            alert('Configurações salvas com sucesso!');
+        } catch (error: any) {
+            alert('Erro ao salvar: ' + error.message);
         } finally {
             setLoading(false);
         }
