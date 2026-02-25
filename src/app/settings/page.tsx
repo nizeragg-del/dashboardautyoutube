@@ -76,9 +76,16 @@ export default function SettingsPage() {
 
             if (error) throw error;
             alert('Configurações salvas com sucesso!');
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error("Erro detalhado:", error);
-            const message = error?.message || error?.error_description || JSON.stringify(error);
+            let message = "Erro inesperado";
+            if (error instanceof Error) {
+                message = error.message;
+            } else if (typeof error === 'object' && error !== null) {
+                message = (error as any).message || (error as any).error_description || JSON.stringify(error);
+            } else {
+                message = String(error);
+            }
             alert('Erro ao salvar: ' + message);
         } finally {
             setLoading(false);
