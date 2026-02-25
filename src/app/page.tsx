@@ -49,6 +49,7 @@ export default function DashboardHome() {
       // 3. Buscar vídeos recentes
       const { data: videos } = await supabase
         .from('videos')
+        .select('*')
         .order('created_at', { ascending: false })
         .eq('user_id', userId)
         .limit(3);
