@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, ChangeEvent } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from "next/navigation";
 
@@ -16,13 +16,26 @@ interface Video {
   created_at?: string;
 }
 
+interface Profile {
+  id: string;
+  gemini_api_key?: string;
+  huggingface_api_key?: string;
+  elevenlabs_api_key?: string;
+  github_token?: string;
+  github_repo?: string;
+  preferred_voice_id?: string;
+  yt_client_id?: string;
+  yt_client_secret?: string;
+  yt_refresh_token?: string;
+}
+
 export default function DashboardHome() {
   const [idea, setIdea] = useState('');
   const [loading, setLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState([
-    { label: 'Vídeos Gerados', value: '0', icon: '📽️' },
+    { label: 'Vídeos Publicados', value: '0', icon: '📽️' },
     { label: 'Visualizações Est.', value: '0', icon: '📈' },
     { label: 'Agendados', value: '0', icon: '📅' },
     { label: 'Créditos API', value: 'Infinity', icon: '♾️' },
@@ -33,11 +46,12 @@ export default function DashboardHome() {
   const fetchDashboardData = useCallback(async (userId: string) => {
     setDataLoading(true);
     try {
-      // 1. Contar vídeos gerados
+      // 1. Contar vídeos REALMENTE publicados (concluídos)
       const { count: videoCount } = await supabase
         .from('videos')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('status', 'completed');
 
       // 2. Contar agendamentos
       const { count: scheduleCount } = await supabase
@@ -55,13 +69,13 @@ export default function DashboardHome() {
         .limit(3);
 
       setStats([
-        { label: 'Vídeos Gerados', value: (videoCount || 0).toString(), icon: '📽️' },
-        { label: 'Visualizações Est.', value: '0', icon: '📈' }, // Placeholder por enquanto
+        { label: 'Vídeos Publicados', value: (videoCount || 0).toString(), icon: '📽️' },
+        { label: 'Visualizações Est.', value: '0', icon: '📈' },
         { label: 'Agendados', value: (scheduleCount || 0).toString(), icon: '📅' },
         { label: 'Créditos API', value: 'Infinity', icon: '♾️' },
       ]);
 
-      if (videos) setRecentVideos(videos);
+      if (videos) setRecentVideos(videos as Video[]);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -95,11 +109,13 @@ export default function DashboardHome() {
         .eq('id', user.id)
         .single();
 
-      if (profileError || !profile || !profile.gemini_api_key) {
+      const typedProfile = profile as Profile;
+
+      if (profileError || !typedProfile || !typedProfile.gemini_api_key) {
         throw new Error('Configure suas chaves nas Configurações primeiro.');
       }
 
-      if (!profile.github_token || !profile.github_repo) {
+      if (!typedProfile.github_token || !typedProfile.github_repo) {
         throw new Error('Configure seu Token e Repositório do GitHub nas Configurações.');
       }
 
@@ -113,8 +129,8 @@ export default function DashboardHome() {
       if (videoError) throw videoError;
 
       // 3. Disparar GitHub Action
-      const repoPath = profile.github_repo;
-      const GITHUB_TOKEN = profile.github_token;
+      const repoPath = typedProfile.github_repo;
+      const GITHUB_TOKEN = typedProfile.github_token;
 
       const response = await fetch(`https://api.github.com/repos/${repoPath}/actions/workflows/viral_generate.yml/dispatches`, {
         method: 'POST',
@@ -127,13 +143,13 @@ export default function DashboardHome() {
           ref: 'main',
           inputs: {
             idea: idea,
-            gemini_key: profile.gemini_api_key,
-            hf_key: profile.huggingface_api_key,
-            elevenlabs_key: profile.elevenlabs_api_key,
-            voice_id: profile.preferred_voice_id || 'pqHfZKP75CvOlQylNhV4',
-            yt_client_id: profile.yt_client_id,
-            yt_client_secret: profile.yt_client_secret,
-            yt_refresh_token: profile.yt_refresh_token,
+            gemini_key: typedProfile.gemini_api_key,
+            hf_key: typedProfile.huggingface_api_key,
+            elevenlabs_key: typedProfile.elevenlabs_api_key,
+            voice_id: typedProfile.preferred_voice_id || 'pqHfZKP75CvOlQylNhV4',
+            yt_client_id: typedProfile.yt_client_id,
+            yt_client_secret: typedProfile.yt_client_secret,
+            yt_refresh_token: typedProfile.yt_refresh_token,
           }
         })
       });
@@ -164,7 +180,6 @@ export default function DashboardHome() {
 
   return (
     <div className="flex flex-col gap-10">
-      {/* Header Section */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-4xl font-bold">Bem-vindo, {user?.email?.split('@')[0]} 🚀</h1>
@@ -175,7 +190,6 @@ export default function DashboardHome() {
         </button>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
           <div key={stat.label} className="glass p-6 flex flex-col gap-2">
@@ -186,9 +200,7 @@ export default function DashboardHome() {
         ))}
       </div>
 
-      {/* Main Action Area */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Quick Generation */}
         <div className="lg:col-span-2 glass p-8 flex flex-col gap-6">
           <h2 className="text-2xl font-bold">Gerar Vídeo Agora</h2>
           <div className="flex flex-col gap-4">
@@ -196,7 +208,7 @@ export default function DashboardHome() {
               className="input-field min-h-[120px] resize-none"
               placeholder="Qual a ideia de hoje? (Ex: A verdade oculta sobre as Pirâmides...)"
               value={idea}
-              onChange={(e) => setIdea(e.target.value)}
+              onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setIdea(e.target.value)}
             />
             <div className="flex gap-4">
               <select className="input-field max-w-[200px] bg-zinc-900 border-zinc-800 text-white">
@@ -215,7 +227,6 @@ export default function DashboardHome() {
           </div>
         </div>
 
-        {/* Recent Activity */}
         <div className="glass p-8 flex flex-col gap-6">
           <h2 className="text-xl font-bold">Atividade Recente</h2>
           <div className="flex flex-col gap-4">
