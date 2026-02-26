@@ -119,12 +119,16 @@ export default function DashboardHome() {
         throw new Error('Configure seu Token e Repositório do GitHub nas Configurações.');
       }
 
-      // 2. Inserir registro de vídeo pendente
-      const { error: videoError } = await supabase
+      // 2. Inserir registro de vídeo pendente e capturar ID
+      const { data: videoData, error: videoError } = await supabase
         .from('videos')
         .insert([
           { user_id: user.id, title: idea, status: 'pending', theme: 'História Curta' }
-        ]);
+        ])
+        .select('id')
+        .single();
+
+      const videoId = videoData?.id;
 
       if (videoError) throw videoError;
 
@@ -150,6 +154,9 @@ export default function DashboardHome() {
             yt_client_id: typedProfile.yt_client_id,
             yt_client_secret: typedProfile.yt_client_secret,
             yt_refresh_token: typedProfile.yt_refresh_token,
+            video_id: videoId,
+            supabase_url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+            supabase_key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
           }
         })
       });
