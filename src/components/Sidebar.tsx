@@ -1,7 +1,7 @@
 "use client";
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { X, User, Video, Calendar, Settings, LayoutDashboard } from 'lucide-react';
+import { X, User, Video, Calendar, Settings, LayoutDashboard, BookOpen } from 'lucide-react';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -15,6 +15,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         { name: 'Dashboard', href: '/', icon: <LayoutDashboard size={20} /> },
         { name: 'Vídeos', href: '/videos', icon: <Video size={20} /> },
         { name: 'Agendamento', href: '/scheduler', icon: <Calendar size={20} /> },
+        { name: 'Tutorial de APIs', href: '/tutorial', icon: <BookOpen size={20} /> },
         { name: 'Configurações', href: '/settings', icon: <Settings size={20} /> },
     ];
 
@@ -59,8 +60,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                                 href={item.href}
                                 onClick={onClose}
                                 className={`flex items-center gap-4 p-4 rounded-2xl transition-all ${isActive
-                                        ? 'bg-white/5 text-white border border-white/10 shadow-lg'
-                                        : 'text-zinc-500 hover:text-white hover:bg-white/[0.02]'
+                                    ? 'bg-white/5 text-white border border-white/10 shadow-lg'
+                                    : 'text-zinc-500 hover:text-white hover:bg-white/[0.02]'
                                     }`}
                             >
                                 <span className={isActive ? 'text-youtube' : ''}>{item.icon}</span>
