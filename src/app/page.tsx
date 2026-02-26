@@ -113,7 +113,10 @@ export default function DashboardHome() {
         })
       });
 
-      if (!response.ok) throw new Error('Falha ao disparar motor no GitHub.');
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Falha ao disparar motor no GitHub: ${response.status} - ${errorText}`);
+      }
 
       // Simulação de transição para "Final" após o disparo (o motor continuará rodando)
       // Em um app real, poderíamos via real-time do Supabase ouvir o status 'completed'
@@ -181,7 +184,8 @@ export default function DashboardHome() {
             <StepVoices
               selectedVoice={selectedVoice}
               onBack={() => setStep('theme')}
-              onNext={(val: string) => { setSelectedVoice(val); handleTriggerEngine(); }}
+              onSelectVoice={(val: string) => setSelectedVoice(val)}
+              onNext={() => handleTriggerEngine()}
             />
           )}
 

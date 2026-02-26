@@ -10,12 +10,13 @@ interface Voice {
 }
 
 interface StepVoicesProps {
-    onNext: (voiceId: string) => void;
+    onNext: () => void;
     onBack: () => void;
+    onSelectVoice: (voiceId: string) => void;
     selectedVoice?: string;
 }
 
-const StepVoices: React.FC<StepVoicesProps> = ({ onNext, onBack, selectedVoice }) => {
+const StepVoices: React.FC<StepVoicesProps> = ({ onNext, onBack, onSelectVoice, selectedVoice }) => {
     const [playingId, setPlayingId] = useState<string | null>(null);
     const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
@@ -53,14 +54,15 @@ const StepVoices: React.FC<StepVoicesProps> = ({ onNext, onBack, selectedVoice }
                 {voices.map((voice) => (
                     <div
                         key={voice.id}
-                        className={`relative group p-8 rounded-3xl border transition-all duration-500 flex items-center justify-between ${selectedVoice === voice.id
+                        onClick={() => onSelectVoice(voice.id)}
+                        className={`relative group p-8 rounded-3xl border transition-all duration-500 flex items-center justify-between cursor-pointer ${selectedVoice === voice.id
                             ? 'border-[#FF0000] bg-[#FF0000]/5 shadow-[0_0_30px_rgba(255,0,0,0.05)]'
                             : 'border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]'
                             }`}
                     >
                         <div className="flex items-center gap-6">
                             <button
-                                onClick={() => togglePlay(voice)}
+                                onClick={(e) => { e.stopPropagation(); togglePlay(voice); }}
                                 className={`w-14 h-14 rounded-full flex items-center justify-center transition-all ${playingId === voice.id ? 'bg-[#FF0000] text-white shadow-[0_0_20px_rgba(255,0,0,0.4)] animate-pulse' : 'bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white hover:scale-110'
                                     }`}
                             >
@@ -77,14 +79,11 @@ const StepVoices: React.FC<StepVoicesProps> = ({ onNext, onBack, selectedVoice }
                                 </div>
                             </div>
                         </div>
-
-                        <button
-                            onClick={() => onNext(voice.id)}
-                            className={`p-3 rounded-2xl transition-all ${selectedVoice === voice.id ? 'text-[#FF0000]' : 'text-zinc-700 hover:text-white'
-                                }`}
+                        <div
+                            className={`p-3 rounded-2xl transition-all ${selectedVoice === voice.id ? 'text-[#FF0000]' : 'text-zinc-700'}`}
                         >
                             <CheckCircle2 size={32} />
-                        </button>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -96,14 +95,15 @@ const StepVoices: React.FC<StepVoicesProps> = ({ onNext, onBack, selectedVoice }
                 >
                     ← Voltar
                 </button>
-                <div className="flex gap-3">
-                    <div className="w-2 h-2 rounded-full bg-zinc-800"></div>
-                    <div className="w-2 h-2 rounded-full bg-zinc-800"></div>
-                    <div className="w-8 h-2 rounded-full bg-[#FF0000]"></div>
-                    <div className="w-2 h-2 rounded-full bg-zinc-800"></div>
-                </div>
+
+                <button
+                    onClick={onNext}
+                    className="flex items-center gap-3 px-8 py-4 rounded-full bg-[#FF0000] hover:bg-[#CC0000] transition-all font-bold text-white shadow-[0_0_30px_rgba(255,0,0,0.15)] active:scale-95"
+                >
+                    Continuar →
+                </button>
             </div>
-        </div>
+        </div >
     );
 };
 
