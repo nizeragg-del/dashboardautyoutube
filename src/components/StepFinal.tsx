@@ -4,9 +4,10 @@ import { CheckCircle2, Youtube, Share2 } from 'lucide-react';
 
 interface StepFinalProps {
     onReset: () => void;
+    idea: string;
 }
 
-const StepFinal: React.FC<StepFinalProps> = ({ onReset }) => {
+const StepFinal: React.FC<StepFinalProps> = ({ onReset, idea }) => {
     return (
         <div className="flex flex-col items-center justify-center gap-12 max-w-2xl mx-auto w-full py-12 animate-in slide-in-from-bottom-12 duration-1000 ease-out">
             <div className="relative">
@@ -30,8 +31,8 @@ const StepFinal: React.FC<StepFinalProps> = ({ onReset }) => {
                             <Youtube size={40} className="text-[#FF0000]" />
                         </div>
                         <div>
-                            <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mb-1">Destino Final</p>
-                            <h3 className="text-2xl font-bold">Meu Canal Viral</h3>
+                            <p className="text-[10px] text-zinc-600 font-bold uppercase tracking-[0.2em] mb-1">Roteiro Finalizado</p>
+                            <h3 className="text-2xl font-bold truncate max-w-[200px] sm:max-w-[400px]">{idea || "Vídeo Gerado"}</h3>
                         </div>
                     </div>
                 </div>

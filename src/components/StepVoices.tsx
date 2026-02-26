@@ -21,10 +21,10 @@ const StepVoices: React.FC<StepVoicesProps> = ({ onNext, onBack, onSelectVoice, 
     const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
 
     const voices: Voice[] = [
-        { id: 'pqHfZKP75CvOlQylNhV4', name: 'Bill (Narrador)', preview_url: 'https://storage.googleapis.com/eleven-public-prod/previews/21m00Tcm4TlvDq8ikWAM.mp3', tags: ['Sério', 'Profundo'] },
-        { id: 'AZnzlk1XvdDHEbmvDth8', name: 'Nicole (Suave)', preview_url: 'https://storage.googleapis.com/eleven-public-prod/previews/AZnzlk1XvdDHEbmvDth8.mp3', tags: ['Calma', 'Explicativa'] },
-        { id: 'EXAVITQu4vr4ARTe9EBX', name: 'Bella (Entusiasta)', preview_url: 'https://storage.googleapis.com/eleven-public-prod/previews/EXAVITQu4vr4ARTe9EBX.mp3', tags: ['Energética', 'Jovem'] },
-        { id: 'Lcf7eeHS9WT78S9fS3yL', name: 'Marcus (Épico)', preview_url: 'https://storage.googleapis.com/eleven-public-prod/previews/Lcf7eeHS9WT78S9fS3yL.mp3', tags: ['Dramático', 'Voz Grave'] }
+        { id: '21m00Tcm4TlvDq8ikWAM', name: 'Rachel (Suave)', preview_url: 'https://storage.googleapis.com/eleven-public-prod/previews/21m00Tcm4TlvDq8ikWAM.mp3', tags: ['Calma', 'Explicativa'] },
+        { id: '29vD33N1CtxCmqQRPOHJ', name: 'Drew (Noticiário)', preview_url: 'https://storage.googleapis.com/eleven-public-prod/previews/29vD33N1CtxCmqQRPOHJ.mp3', tags: ['Sério', 'Profissional'] },
+        { id: '2EiwWnXFnvU5JabPnv8n', name: 'Clyde (Épico)', preview_url: 'https://storage.googleapis.com/eleven-public-prod/previews/2EiwWnXFnvU5JabPnv8n.mp3', tags: ['Dramático', 'Voz Grave'] },
+        { id: 'EXAVITQu4vr4ARTe9EBX', name: 'Bella (Entusiasta)', preview_url: 'https://storage.googleapis.com/eleven-public-prod/previews/EXAVITQu4vr4ARTe9EBX.mp3', tags: ['Energética', 'Jovem'] }
     ];
 
     const togglePlay = (voice: Voice) => {

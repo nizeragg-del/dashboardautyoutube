@@ -38,7 +38,7 @@ export default function DashboardHome() {
   const [step, setStep] = useState<StepType>('chat');
   const [idea, setIdea] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('history');
-  const [selectedVoice, setSelectedVoice] = useState('pqHfZKP75CvOlQylNhV4');
+  const [selectedVoice, setSelectedVoice] = useState('21m00Tcm4TlvDq8ikWAM');
 
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -203,7 +203,7 @@ export default function DashboardHome() {
           )}
 
           {step === 'final' && (
-            <StepFinal onReset={() => { setIdea(''); setStep('chat'); }} />
+            <StepFinal idea={idea} onReset={() => { setIdea(''); setStep('chat'); }} />
           )}
         </div>
       </main>
