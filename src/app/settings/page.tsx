@@ -1,5 +1,5 @@
-"use client";
-import { useState, useEffect, ChangeEvent } from 'react';
+'use client';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from "next/navigation";
 
@@ -23,7 +23,7 @@ interface Profile {
 export default function SettingsPage() {
     const [loading, setLoading] = useState(false);
     const [user, setUser] = useState<User | null>(null);
-    const [keys, setKeys] = useState({
+    const [keys, setKeys] = useState<Record<string, string>>({
         gemini: '',
         elevenlabs: '',
         huggingface: '',
@@ -106,12 +106,15 @@ export default function SettingsPage() {
         }
     };
 
-    const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
-        setKeys(prev => ({ ...prev, [name]: value }));
+        setKeys((prev: Record<string, string>) => ({
+            ...prev,
+            [name]: value,
+        }));
     };
 
-    const handleSelectChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         setKeys(prev => ({ ...prev, voice_id: e.target.value }));
     };
 
@@ -166,36 +169,10 @@ export default function SettingsPage() {
                     </div>
                 </div>
 
-                {/* GitHub Integration Card */}
-                <div className="glass p-8 flex flex-col gap-6">
-                    <h2 className="text-xl font-semibold flex items-center gap-2">
-                        🐙 Execução (GitHub Actions)
-                    </h2>
-
-                    <div className="flex flex-col gap-4">
-                        <div>
-                            <label className="text-sm text-zinc-500 mb-1 block">GitHub Personal Access Token (PAT)</label>
-                            <input
-                                name="github_token"
-                                type="password"
-                                className="input-field"
-                                value={keys.github_token}
-                                onChange={handleInputChange}
-                                placeholder="ghp_..."
-                            />
-                        </div>
-                        <div>
-                            <label className="text-sm text-zinc-500 mb-1 block">Repositório (usuário/repo)</label>
-                            <input
-                                name="github_repo"
-                                type="text"
-                                className="input-field"
-                                value={keys.github_repo}
-                                onChange={handleInputChange}
-                                placeholder="nizera/viral-engine"
-                            />
-                        </div>
-                    </div>
+                {/* GitHub Integration - Oculto/Automático */}
+                <div className="hidden">
+                    <input name="github_token" value={keys.github_token} readOnly />
+                    <input name="github_repo" value={keys.github_repo} readOnly />
                 </div>
 
                 {/* YouTube Integration Card */}

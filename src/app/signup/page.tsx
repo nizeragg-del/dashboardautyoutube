@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
@@ -13,7 +13,7 @@ export default function SignupPage() {
     const [message, setMessage] = useState("");
     const router = useRouter();
 
-    const handleSignup = async (e: React.FormEvent) => {
+    const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setLoading(true);
         setMessage("");
@@ -58,7 +58,7 @@ export default function SignupPage() {
                             type="email"
                             placeholder="seu@email.com"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                             className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
                             required
                         />
@@ -69,7 +69,7 @@ export default function SignupPage() {
                             type="password"
                             placeholder="••••••••"
                             value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                             className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
                             required
                         />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from 'next/link';
@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState("");
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
@@ -35,10 +35,10 @@ export default function LoginPage() {
     <div className="min-h-screen bg-[#0a0a0a] text-white flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md bg-[#121212] border border-[#222] p-8 rounded-2xl shadow-2xl">
         <div className="flex items-center gap-2 mb-8 justify-center">
-            <Rocket className="text-blue-500 w-8 h-8" />
-            <span className="text-2xl font-bold tracking-tight">ViralEngine</span>
+          <Rocket className="text-blue-500 w-8 h-8" />
+          <span className="text-2xl font-bold tracking-tight">ViralEngine</span>
         </div>
-        
+
         <h1 className="text-2xl font-bold mb-2 text-center">Bem-vindo de volta</h1>
         <p className="text-gray-400 text-sm mb-8 text-center">Acesse sua conta para gerenciar seus virais</p>
 
@@ -49,7 +49,7 @@ export default function LoginPage() {
               type="email"
               placeholder="seu@email.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
               className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
               required
             />
@@ -60,12 +60,12 @@ export default function LoginPage() {
               type="password"
               placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               className="w-full bg-[#1a1a1a] border border-[#333] rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
               required
             />
           </div>
-          
+
           <button
             type="submit"
             disabled={loading}
