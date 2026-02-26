@@ -49,51 +49,49 @@ const StepTheme: React.FC<StepThemeProps> = ({ onNext, onBack, selectedTheme }) 
     ];
 
     return (
-        <div className="flex flex-col gap-8 max-w-4xl mx-auto w-full animate-in fade-in slide-in-from-right-4 duration-700">
-            <div className="text-center space-y-2">
-                <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-500">
-                    Escolha o Estilo Visual
+        <div className="flex flex-col gap-12 max-w-4xl mx-auto w-full animate-in fade-in slide-in-from-right-8 duration-1000 ease-out">
+            <div className="text-center space-y-4">
+                <h1 className="text-5xl font-extrabold tracking-tight gradient-text">
+                    Estilo Visual
                 </h1>
-                <p className="text-zinc-400">O estilo determina a trilha sonora, as imagens e o ritmo do vídeo.</p>
+                <p className="text-zinc-500 text-lg font-medium">O estilo define a atmosfera, trilha sonora e o ritmo do seu vídeo.</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {themes.map((theme) => (
                     <button
                         key={theme.id}
                         onClick={() => onNext(theme.id)}
-                        className={`relative group text-left p-6 rounded-2xl border transition-all duration-300 ${selectedTheme === theme.id
-                            ? 'border-blue-500 bg-blue-500/10'
-                            : 'border-white/5 bg-white/5 hover:border-white/20 hover:bg-white/10'
+                        className={`relative group text-left p-8 rounded-3xl border transition-all duration-500 ${selectedTheme === theme.id
+                            ? 'border-[#FF0000] bg-[#FF0000]/5 shadow-[0_0_30px_rgba(255,0,0,0.05)]'
+                            : 'border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]'
                             }`}
                     >
-                        <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${theme.color} flex items-center justify-center text-2xl mb-4 shadow-lg shadow-black/40 group-hover:scale-110 transition-transform`}>
+                        <div className={`w-14 h-14 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center text-3xl mb-6 shadow-xl group-hover:scale-110 transition-transform`}>
                             {theme.preview}
                         </div>
-                        <h3 className="text-xl font-bold mb-1">{theme.name}</h3>
-                        <p className="text-sm text-zinc-500 leading-relaxed">{theme.description}</p>
+                        <h3 className="text-2xl font-bold mb-2">{theme.name}</h3>
+                        <p className="text-zinc-500 font-medium leading-relaxed">{theme.description}</p>
 
                         {selectedTheme === theme.id && (
-                            <div className="absolute top-4 right-4 text-blue-500">
-                                <CheckCircle2 size={24} />
+                            <div className="absolute top-6 right-6 text-[#FF0000]">
+                                <CheckCircle2 size={32} />
                             </div>
                         )}
-
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                     </button>
                 ))}
             </div>
 
-            <div className="flex justify-between items-center mt-4">
+            <div className="flex justify-between items-center px-4">
                 <button
                     onClick={onBack}
-                    className="text-zinc-500 hover:text-white transition-colors"
+                    className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-600 hover:text-white transition-all"
                 >
-                    Voltar para ideia
+                    ← Voltar
                 </button>
-                <div className="flex gap-2">
+                <div className="flex gap-3">
                     <div className="w-2 h-2 rounded-full bg-zinc-800"></div>
-                    <div className="w-8 h-2 rounded-full bg-blue-600"></div>
+                    <div className="w-8 h-2 rounded-full bg-[#FF0000]"></div>
                     <div className="w-2 h-2 rounded-full bg-zinc-800"></div>
                     <div className="w-2 h-2 rounded-full bg-zinc-800"></div>
                 </div>

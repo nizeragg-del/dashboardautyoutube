@@ -37,47 +37,51 @@ const StepLoading: React.FC<StepLoadingProps> = ({ idea }) => {
     }, []);
 
     return (
-        <div className="flex flex-col items-center justify-center gap-12 max-w-2xl mx-auto w-full min-h-[400px] animate-in zoom-in-95 duration-700">
+        <div className="flex flex-col items-center justify-center gap-16 max-w-2xl mx-auto w-full min-h-[500px] animate-in zoom-in-95 duration-1000 ease-out">
             <div className="relative">
-                <div className="absolute inset-0 bg-blue-600 rounded-full blur-[60px] opacity-20 animate-pulse"></div>
-                <div className="relative w-32 h-32 bg-zinc-900 border border-white/10 rounded-full flex items-center justify-center shadow-2xl">
-                    <Rocket size={48} className="text-blue-500 animate-bounce" />
-                    <div className="absolute inset-0 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                <div className="absolute inset-0 bg-[#FF0000] rounded-full blur-[80px] opacity-10 animate-pulse"></div>
+                <div className="relative w-40 h-40 bg-zinc-900 border border-white/5 rounded-full flex items-center justify-center shadow-2xl">
+                    <Rocket size={64} className="text-[#FF0000] animate-bounce" />
+                    <div className="absolute inset-0 border-2 border-[#FF0000] border-t-transparent rounded-full animate-spin"></div>
                 </div>
             </div>
 
-            <div className="text-center space-y-4 w-full">
-                <h2 className="text-3xl font-bold italic">&ldquo;{idea}&rdquo;</h2>
-                <p className="text-zinc-500 flex items-center justify-center gap-2">
-                    <Loader2 size={16} className="animate-spin" /> {currentStatus}
+            <div className="text-center space-y-6 w-full">
+                <div className="space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-zinc-600">Criando sua obra prima</p>
+                    <h2 className="text-3xl font-extrabold italic text-white tracking-tight">&ldquo;{idea}&rdquo;</h2>
+                </div>
+
+                <p className="text-zinc-500 font-medium flex items-center justify-center gap-3">
+                    <Loader2 size={18} className="animate-spin text-[#FF0000]" /> {currentStatus}
                 </p>
 
-                <div className="mt-8 space-y-2">
-                    <div className="flex justify-between text-xs font-bold text-zinc-500 uppercase tracking-tighter">
-                        <span>Progresso Real</span>
+                <div className="mt-12 space-y-3">
+                    <div className="flex justify-between text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                        <span>Status da Produção</span>
                         <span>{Math.floor(progress)}%</span>
                     </div>
-                    <div className="h-3 w-full bg-zinc-900 rounded-full overflow-hidden border border-white/5 p-0.5">
+                    <div className="h-2 w-full bg-zinc-900/50 rounded-full overflow-hidden border border-white/5 p-0.5">
                         <div
-                            className="h-full bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-400 rounded-full transition-all duration-500 ease-out shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+                            className="h-full bg-[#FF0000] rounded-full transition-all duration-700 ease-out shadow-[0_0_15px_rgba(255,0,0,0.3)]"
                             style={{ width: `${progress}%` }}
                         ></div>
                     </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-8 w-full mt-4">
-                <div className="flex flex-col items-center gap-2 opacity-40">
-                    <Sparkles className="text-zinc-400" />
-                    <span className="text-[10px] uppercase font-bold tracking-widest">Roteiro</span>
+            <div className="grid grid-cols-3 gap-12 w-full mt-8">
+                <div className="flex flex-col items-center gap-3 opacity-30">
+                    <Sparkles size={20} className="text-zinc-400" />
+                    <span className="text-[10px] uppercase font-bold tracking-[0.2em]">Roteiro</span>
                 </div>
-                <div className="flex flex-col items-center gap-2 opacity-100">
-                    <Wand2 className="text-blue-500 animate-pulse" />
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-blue-500">Produção</span>
+                <div className="flex flex-col items-center gap-3">
+                    <Wand2 size={24} className="text-[#FF0000] animate-pulse" />
+                    <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-[#FF0000]">Produção</span>
                 </div>
-                <div className="flex flex-col items-center gap-2 opacity-40">
-                    <Film className="text-zinc-400" />
-                    <span className="text-[10px] uppercase font-bold tracking-widest">Upload</span>
+                <div className="flex flex-col items-center gap-3 opacity-30">
+                    <Film size={20} className="text-zinc-400" />
+                    <span className="text-[10px] uppercase font-bold tracking-[0.2em]">Upload</span>
                 </div>
             </div>
         </div>

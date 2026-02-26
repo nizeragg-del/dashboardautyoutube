@@ -29,6 +29,8 @@ interface Profile {
 type StepType = 'chat' | 'theme' | 'voices' | 'loading' | 'final';
 
 export default function DashboardHome() {
+  const router = useRouter();
+
   const [step, setStep] = useState<StepType>('chat');
   const [idea, setIdea] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('history');
@@ -38,8 +40,7 @@ export default function DashboardHome() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [showSetup, setShowSetup] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const loadProfile = useCallback(async (userId: string) => {
     const { data } = await supabase
@@ -125,17 +126,42 @@ export default function DashboardHome() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+      <div className="w-12 h-12 border-4 border-white/10 border-t-[#FF0000] rounded-full animate-spin"></div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white">
-      <Sidebar />
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-youtube selection:text-white">
+      {/* Header Minimalista */}
+      <header className="fixed top-0 left-0 right-0 h-20 flex items-center justify-between px-8 z-40">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="w-10 h-10 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-950 border border-white/10 flex items-center justify-center hover:scale-110 transition-transform shadow-lg shadow-black"
+          >
+            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white">
+              {user?.email?.[0].toUpperCase() || 'U'}
+            </div>
+          </button>
+          <div className="text-xl font-bold tracking-tighter gradient-text">ViralEngine</div>
+        </div>
 
-      <main className="ml-64 p-8 min-h-screen flex flex-col items-center justify-center">
-        <div className="w-full max-w-5xl">
+        <div className="flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5 text-[10px] uppercase tracking-widest font-bold text-zinc-500">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+            Motor Online
+          </div>
+        </div>
+      </header>
+
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+      <main className="relative pt-20 min-h-screen flex flex-col items-center justify-center overflow-hidden">
+        {/* Background Glow */}
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+        <div className="w-full max-w-4xl px-6 relative z-10">
           {step === 'chat' && (
             <StepChat
               initialValue={idea}
