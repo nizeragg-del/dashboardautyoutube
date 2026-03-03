@@ -1,7 +1,8 @@
 "use client";
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { X, User, Video, Calendar, Settings, LayoutDashboard, BookOpen } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { X, User, Video, Calendar, Settings, LayoutDashboard, BookOpen, LogOut } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 interface SidebarProps {
     isOpen: boolean;
@@ -10,6 +11,13 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     const pathname = usePathname();
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.push('/login');
+        onClose();
+    };
 
     const menuItems = [
         { name: 'Dashboard', href: '/', icon: <LayoutDashboard size={20} /> },
@@ -70,6 +78,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                         );
                     })}
                 </nav>
+
+                <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-4 p-4 rounded-2xl transition-all text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                >
+                    <LogOut size={20} />
+                    <span className="font-semibold text-sm">Sair da Conta</span>
+                </button>
 
                 <div className="mt-auto p-4 text-[10px] text-zinc-600 font-medium uppercase tracking-[0.2em]">
                     <p>© Nizera&apos;s Org v1.0.2</p>
