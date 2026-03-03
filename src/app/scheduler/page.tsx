@@ -6,8 +6,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-import { Calendar as CalendarIcon, Clock, GripVertical, CheckCircle2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, CheckCircle2 } from 'lucide-react';
 
 interface User {
     id: string;
@@ -22,6 +21,14 @@ interface Video {
     scheduled_for?: string | null;
 }
 
+interface Automation {
+    id: string;
+    theme: string;
+    days_of_week: number[];
+    time_of_day: string;
+    is_active: boolean;
+}
+
 export default function SchedulerPage() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [user, setUser] = useState<User | null>(null);
@@ -29,52 +36,85 @@ export default function SchedulerPage() {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
     const [isMounted, setIsMounted] = useState(false); // Prevents hydration mismatch with dnd
 
+    const [automation, setAutomation] = useState<Automation | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Status local form
+    const [theme, setTheme] = useState('');
+    const [daysOfWeek, setDaysOfWeek] = useState<number[]>([]);
+    const [timeOfDay, setTimeOfDay] = useState('18:00');
+    const [isActive, setIsActive] = useState(false);
+
     useEffect(() => {
         setIsMounted(true);
         async function loadData() {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 setUser(session.user);
-                // Fetch videos that are pending schedule (using status != published for now)
-                const { data } = await supabase
+
+                // Fetch videos
+                const { data: vData } = await supabase
                     .from('videos')
                     .select('*')
                     .order('created_at', { ascending: false });
+                if (vData) setVideos(vData as Video[]);
 
-                if (data) setVideos(data as Video[]);
+                // Fetch automations
+                const { data: aData } = await supabase
+                    .from('automations')
+                    .select('*')
+                    .eq('user_id', session.user.id)
+                    .single();
+
+                if (aData) {
+                    setAutomation(aData as Automation);
+                    setTheme(aData.theme);
+                    setDaysOfWeek(aData.days_of_week || []);
+                    setTimeOfDay(aData.time_of_day || '18:00');
+                    setIsActive(aData.is_active || false);
+                }
             }
         }
         loadData();
     }, []);
 
-    // Filter videos by queue (not scheduled) and scheduled
-    const queueVideos = videos.filter(v => !v.scheduled_for);
-    const scheduledVideos = videos.filter(v => v.scheduled_for);
+    const toggleDay = (day: number) => {
+        setDaysOfWeek(prev =>
+            prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day].sort()
+        );
+    };
 
-    // Mock handler for Drop
-    const onDragEnd = async (result: DropResult) => {
-        if (!result.destination) return;
+    const handleSaveAutomation = async () => {
+        if (!user) return;
+        setIsSaving(true);
 
-        const { source, destination, draggableId } = result;
+        try {
+            const payload = {
+                user_id: user.id,
+                theme: theme || 'Aleatório',
+                days_of_week: daysOfWeek,
+                time_of_day: timeOfDay,
+                is_active: isActive
+            };
 
-        // Arrastando da Fila para o Calendário
-        if (source.droppableId === 'queue' && destination.droppableId === 'calendar') {
-            if (!selectedDate) return;
-
-            // Otimista UI Update
-            const scheduledDateStr = selectedDate.toISOString();
-            setVideos(prev => prev.map(v => v.id === draggableId ? { ...v, scheduled_for: scheduledDateStr } : v));
-
-            // Update no DB (Silencioso)
-            await supabase.from('videos').update({ scheduled_for: scheduledDateStr }).eq('id', draggableId);
-        }
-
-        // Arrastando do Calendário de volta para a Fila (Remover agendamento)
-        if (source.droppableId === 'calendar' && destination.droppableId === 'queue') {
-            setVideos(prev => prev.map(v => v.id === draggableId ? { ...v, scheduled_for: null } : v));
-            await supabase.from('videos').update({ scheduled_for: null }).eq('id', draggableId);
+            if (automation) {
+                // Update
+                const { data, error } = await supabase.from('automations').update(payload).eq('id', automation.id).select().single();
+                if (!error && data) setAutomation(data as Automation);
+            } else {
+                // Insert
+                const { data, error } = await supabase.from('automations').insert([payload]).select().single();
+                if (!error && data) setAutomation(data as Automation);
+            }
+            alert("Automação Semanal Salva com Sucesso! 🚀");
+        } catch (error) {
+            console.error("Erro ao salvar automação", error);
+        } finally {
+            setIsSaving(false);
         }
     };
+
+
 
     if (!isMounted) return null;
 
@@ -106,141 +146,155 @@ export default function SchedulerPage() {
 
             <main className="relative pt-32 min-h-screen max-w-7xl mx-auto px-6 relative z-10 flex flex-col gap-8">
                 <div>
-                    <h1 className="text-4xl font-bold gradient-text">Agendamento Inteligente</h1>
-                    <p className="text-zinc-400 mt-2">Arraste seus vídeos finalizados para a data de publicação no YouTube.</p>
+                    <h1 className="text-4xl font-bold gradient-text">Piloto Automático (Routine)</h1>
+                    <p className="text-zinc-400 mt-2">Configure os dias, o nicho e deixe o sistema criar e publicar vídeos sem você encostar o dedo.</p>
                 </div>
 
-                <DragDropContext onDragEnd={onDragEnd}>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                        {/* Coluna da Esquerda: Fila de Vídeos Pendentes */}
-                        <div className="col-span-1 border border-white/5 bg-white/[0.02] rounded-[32px] p-6 flex flex-col gap-6">
-                            <div className="flex items-center justify-between">
-                                <h3 className="font-bold text-lg flex items-center gap-2">
-                                    <Clock size={20} className="text-[#FF0000]" />
-                                    Fila Fria
-                                </h3>
-                                <span className="text-xs bg-white/5 px-3 py-1 rounded-full text-zinc-400 font-bold">{queueVideos.length} pendentes</span>
+                    {/* COLUNA ESQUERDA: Configurações do Automator */}
+                    <div className="col-span-1 lg:col-span-1 border border-white/5 bg-white/[0.02] rounded-[32px] p-8 flex flex-col gap-6 relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#FF0000]/5 rounded-full blur-[100px] pointer-events-none"></div>
+
+                        <div className="flex items-center justify-between border-b border-white/5 pb-4">
+                            <h3 className="font-bold text-xl flex items-center gap-2">
+                                <Clock size={24} className={isActive ? "text-[#FF0000]" : "text-zinc-500"} />
+                                Settings
+                            </h3>
+                            <div className="flex items-center gap-3">
+                                <span className="text-sm text-zinc-400 font-bold">{isActive ? 'ATIVADO' : 'PAUSADO'}</span>
+                                <button
+                                    onClick={() => setIsActive(!isActive)}
+                                    className={`w-12 h-6 rounded-full flex items-center p-1 transition-all ${isActive ? 'bg-[#FF0000]' : 'bg-zinc-800'}`}
+                                >
+                                    <div className={`w-4 h-4 rounded-full bg-white transition-all ${isActive ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                                </button>
                             </div>
+                        </div>
 
-                            <Droppable droppableId="queue">
-                                {(provided, snapshot) => (
-                                    <div
-                                        {...provided.droppableProps}
-                                        ref={provided.innerRef}
-                                        className={`flex-1 min-h-[400px] flex flex-col gap-3 p-2 rounded-2xl transition-colors ${snapshot.isDraggingOver ? 'bg-white/5' : ''}`}
+                        {/* TEMA */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-bold text-zinc-400">Nicho / Tema da Semana</label>
+                            <input
+                                type="text"
+                                value={theme}
+                                onChange={(e) => setTheme(e.target.value)}
+                                placeholder="ex: Curiosidades Históricas, Fatos Ocultos..."
+                                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-[#FF0000] focus:ring-1 focus:ring-[#FF0000] transition-all"
+                            />
+                        </div>
+
+                        {/* HORARIO */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-bold text-zinc-400">Horário de Publicação (Local)</label>
+                            <input
+                                type="time"
+                                value={timeOfDay}
+                                onChange={(e) => setTimeOfDay(e.target.value)}
+                                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-[#FF0000] focus:ring-1 focus:ring-[#FF0000] transition-all"
+                            />
+                        </div>
+
+                        {/* DIAS DA SEMANA */}
+                        <div className="flex flex-col gap-2">
+                            <label className="text-sm font-bold text-zinc-400">Dias de Geração e Postagem</label>
+                            <div className="flex gap-2 flex-wrap">
+                                {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day, ix) => (
+                                    <button
+                                        key={day}
+                                        onClick={() => toggleDay(ix)}
+                                        className={`px-4 py-2 rounded-xl text-sm font-bold transition-all ${daysOfWeek.includes(ix) ? 'bg-[#FF0000] text-white shadow-lg shadow-[#FF0000]/20 scale-105' : 'bg-zinc-900 border border-white/10 text-zinc-400 hover:bg-white/5 hover:text-white'}`}
                                     >
-                                        {queueVideos.length === 0 ? (
-                                            <div className="h-full flex items-center justify-center text-zinc-600 text-sm font-medium text-center p-8">
-                                                Nenhum vídeo pendente na fila. Gere mais conteúdo no Dashboard!
-                                            </div>
-                                        ) : (
-                                            queueVideos.map((video, index) => (
-                                                <Draggable key={video.id} draggableId={video.id} index={index}>
-                                                    {(provided, snapshot) => (
-                                                        <div
-                                                            ref={provided.innerRef}
-                                                            {...provided.draggableProps}
-                                                            {...provided.dragHandleProps}
-                                                            className={`p-4 rounded-2xl border flex items-center gap-4 transition-all ${snapshot.isDragging ? 'bg-[#FF0000]/10 border-[#FF0000]/30 shadow-2xl scale-105 z-50' : 'bg-zinc-900 border-white/5 hover:bg-white/[0.05]'}`}
-                                                        >
-                                                            <GripVertical size={20} className="text-zinc-600" />
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-sm font-bold truncate">{video.title}</p>
-                                                                <p className="text-[10px] text-zinc-500 uppercase tracking-wider">{video.status}</p>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </Draggable>
-                                            ))
-                                        )}
-                                        {provided.placeholder}
-                                    </div>
-                                )}
-                            </Droppable>
-                        </div>
-
-                        {/* Coluna da Direita: Agenda / Calendar */}
-                        <div className="col-span-1 lg:col-span-2 border border-white/5 bg-white/[0.02] rounded-[32px] p-8 flex flex-col items-center gap-8 relative overflow-hidden">
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-[#FF0000]/5 rounded-full blur-[100px] pointer-events-none"></div>
-
-                            <div className="flex w-full justify-between items-end border-b border-white/5 pb-6 relative z-10">
-                                <div>
-                                    <h3 className="font-bold text-2xl">Mesa Estratégica</h3>
-                                    <p className="text-zinc-500 text-sm mt-1">Selecione o dia e solte os vídeos aqui.</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="text-[#FF0000] font-bold text-lg">{selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : 'Selecione'}</p>
-                                </div>
-                            </div>
-
-                            <div className="flex flex-col md:flex-row gap-8 w-full relative z-10">
-                                {/* Componente do Calendário Visual */}
-                                <div className="calendar-wrapper bg-zinc-900 border border-white/5 rounded-3xl p-4 shadow-xl">
-                                    <style dangerouslySetInnerHTML={{
-                                        __html: `
-                                        .rdp { --rdp-cell-size: 40px; --rdp-accent-color: #FF0000; --rdp-background-color: rgba(255, 0, 0, 0.1); margin: 0; }
-                                        .rdp-day_selected { font-weight: bold; }
-                                        .rdp-button:hover:not([disabled]):not(.rdp-day_selected) { background-color: rgba(255,255,255,0.05); }
-                                     `}} />
-                                    <DayPicker
-                                        mode="single"
-                                        selected={selectedDate}
-                                        onSelect={setSelectedDate}
-                                        locale={ptBR}
-                                        showOutsideDays
-                                        className="text-white"
-                                    />
-                                </div>
-
-                                {/* Zona de Drop do Dia Selecionado */}
-                                <Droppable droppableId="calendar">
-                                    {(provided, snapshot) => (
-                                        <div
-                                            {...provided.droppableProps}
-                                            ref={provided.innerRef}
-                                            className={`flex-1 flex flex-col gap-4 p-6 rounded-3xl border-2 border-dashed transition-all min-h-[300px] ${snapshot.isDraggingOver ? 'border-[#FF0000] bg-[#FF0000]/5' : 'border-white/10 bg-white/[0.01]'}`}
-                                        >
-                                            <div className="flex items-center gap-3 text-zinc-400 mb-2">
-                                                <CalendarIcon size={20} />
-                                                <h4 className="font-bold text-sm uppercase tracking-widest">Publicações do Dia</h4>
-                                            </div>
-
-                                            {scheduledVideos.filter(v => v.scheduled_for && new Date(v.scheduled_for).toDateString() === selectedDate?.toDateString()).length === 0 ? (
-                                                <div className="flex-1 flex flex-col items-center justify-center text-zinc-600 gap-2 text-center opacity-50">
-                                                    <p className="text-sm font-medium">Solte vídeos da fila aqui</p>
-                                                </div>
-                                            ) : (
-                                                scheduledVideos
-                                                    .filter(v => v.scheduled_for && new Date(v.scheduled_for).toDateString() === selectedDate?.toDateString())
-                                                    .map((video, index) => (
-                                                        <Draggable key={video.id} draggableId={video.id} index={index}>
-                                                            {(provided) => (
-                                                                <div
-                                                                    ref={provided.innerRef}
-                                                                    {...provided.draggableProps}
-                                                                    {...provided.dragHandleProps}
-                                                                    className="p-4 rounded-xl bg-gradient-to-r from-zinc-900 to-[#FF0000]/10 border border-[#FF0000]/20 flex items-center justify-between"
-                                                                >
-                                                                    <div className="flex items-center gap-3">
-                                                                        <GripVertical size={16} className="text-[#FF0000]/50" />
-                                                                        <p className="text-sm font-bold text-white max-w-[200px] truncate">{video.title}</p>
-                                                                    </div>
-                                                                    <CheckCircle2 size={18} className="text-[#FF0000]" />
-                                                                </div>
-                                                            )}
-                                                        </Draggable>
-                                                    ))
-                                            )}
-                                            {provided.placeholder}
-                                        </div>
-                                    )}
-                                </Droppable>
+                                        {day}
+                                    </button>
+                                ))}
                             </div>
                         </div>
 
+                        <button
+                            onClick={handleSaveAutomation}
+                            disabled={isSaving}
+                            className="w-full mt-4 py-4 rounded-2xl bg-white text-black font-bold uppercase tracking-wider hover:bg-zinc-200 hover:scale-[1.02] transition-all shadow-[0_0_30px_rgba(255,255,255,0.1)] flex items-center justify-center gap-2"
+                        >
+                            {isSaving ? 'Salvando...' : 'Salvar Automação'}
+                            <CheckCircle2 size={18} />
+                        </button>
                     </div>
-                </DragDropContext>
+
+                    {/* COLUNA DIREITA: Calendário (Visualização Passiva) */}
+                    <div className="col-span-1 lg:col-span-2 border border-white/5 bg-white/[0.02] rounded-[32px] p-8 flex flex-col gap-8">
+                        <div className="flex w-full justify-between items-end border-b border-white/5 pb-4">
+                            <div>
+                                <h3 className="font-bold text-2xl">Mesa Visível</h3>
+                                <p className="text-zinc-500 text-sm mt-1">Veja quais dias possuem ações programadas (destaque em vermelho). Clicar no dia carrega a fila.</p>
+                            </div>
+                            <div className="text-right">
+                                <p className="text-zinc-400 font-bold text-lg">{selectedDate ? format(selectedDate, "dd 'de' MMMM", { locale: ptBR }) : 'Selecione'}</p>
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col md:flex-row gap-8 w-full">
+                            <div className="calendar-wrapper bg-zinc-900 border border-white/5 rounded-3xl p-4 shadow-xl">
+                                <style dangerouslySetInnerHTML={{
+                                    __html: `
+                                    .rdp { --rdp-cell-size: 40px; --rdp-accent-color: #FF0000; --rdp-background-color: rgba(255, 0, 0, 0.1); margin: 0; }
+                                    .rdp-day_selected { font-weight: bold; background-color: #FF0000!important; color: white!important; border-radius: 8px;}
+                                    .rdp-day_today { font-weight: 900; color: #FF0000;}
+                                    .day-is-routine { position: relative; }
+                                    .day-is-routine::after { content: ''; position: absolute; bottom: 4px; left: 50%; width: 4px; height: 4px; background: #FF0000; border-radius: 50%; transform: translateX(-50%); }
+                                    .rdp-button:hover:not([disabled]):not(.rdp-day_selected) { background-color: rgba(255,255,255,0.05); }
+                                    `}}
+                                />
+                                <DayPicker
+                                    mode="single"
+                                    selected={selectedDate}
+                                    onSelect={setSelectedDate}
+                                    locale={ptBR}
+                                    showOutsideDays
+                                    className="text-white"
+                                    modifiers={{
+                                        routine: (date) => !!(isActive && daysOfWeek.includes(date.getDay()))
+                                    }}
+                                    modifiersClassNames={{
+                                        routine: 'day-is-routine'
+                                    }}
+                                />
+                            </div>
+
+                            <div className="flex-1 flex flex-col gap-4 p-6 rounded-3xl border border-white/10 bg-zinc-900 overflow-y-auto max-h-[350px]">
+                                <div className="flex items-center gap-3 text-zinc-400 mb-2">
+                                    <CalendarIcon size={20} />
+                                    <h4 className="font-bold text-sm uppercase tracking-widest">Postagens daquele dia</h4>
+                                </div>
+
+                                {scheduledVideos.filter(v => v.scheduled_for && new Date(v.scheduled_for).toDateString() === selectedDate?.toDateString()).length === 0 ? (
+                                    <div className="flex-1 flex flex-col items-center justify-center text-zinc-600 gap-2 text-center opacity-50 mt-10">
+                                        <p className="text-sm font-medium">Nenhum vídeo publicado/pendente para este dia exato.</p>
+                                        {(isActive && selectedDate && daysOfWeek.includes(selectedDate.getDay())) && (
+                                            <p className="text-xs text-[#FF0000] mt-2 border border-[#FF0000]/20 bg-[#FF0000]/10 px-3 py-1 rounded-full">O Piloto Automático vai agir nesta data!</p>
+                                        )}
+                                    </div>
+                                ) : (
+                                    scheduledVideos
+                                        .filter(v => v.scheduled_for && new Date(v.scheduled_for).toDateString() === selectedDate?.toDateString())
+                                        .map((video) => (
+                                            <div key={video.id} className="p-4 rounded-xl bg-gradient-to-r from-zinc-800 to-zinc-900 border border-white/5 flex items-center justify-between">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-[#FF0000]/10 flex items-center justify-center">
+                                                        <CheckCircle2 size={16} className="text-[#FF0000]" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <p className="text-sm font-bold text-white line-clamp-1">{video.title}</p>
+                                                        <span className="text-xs text-zinc-500 uppercase">{video.status}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </main>
         </div>
     );
