@@ -22,8 +22,6 @@ interface Profile {
   gemini_api_key?: string;
   elevenlabs_api_key?: string;
   huggingface_api_key?: string;
-  yt_client_id?: string;
-  yt_client_secret?: string;
   yt_refresh_token?: string;
   github_token?: string;
   github_repo?: string;
@@ -112,8 +110,6 @@ export default function DashboardHome() {
             hf_key: profile.huggingface_api_key || '',
             elevenlabs_key: profile.elevenlabs_api_key || '',
             voice_id: selectedVoice,
-            yt_client_id: profile.yt_client_id || '',
-            yt_client_secret: profile.yt_client_secret || '',
             yt_refresh_token: profile.yt_refresh_token || '',
             video_id: videoData.id,
             supabase_url: process.env.NEXT_PUBLIC_SUPABASE_URL || '',

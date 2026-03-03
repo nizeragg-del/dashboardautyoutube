@@ -16,8 +16,6 @@ interface Profile {
     preferred_voice_id?: string;
     github_token?: string;
     github_repo?: string;
-    yt_client_id?: string;
-    yt_client_secret?: string;
     yt_refresh_token?: string;
 }
 
@@ -32,8 +30,6 @@ export default function SettingsPage() {
         voice_id: 'pqHfZKP75CvOlQylNhV4',
         github_token: '',
         github_repo: '',
-        yt_client_id: '',
-        yt_client_secret: '',
         yt_refresh_token: '',
     });
     const router = useRouter();
@@ -62,8 +58,6 @@ export default function SettingsPage() {
                     voice_id: profile.preferred_voice_id || 'pqHfZKP75CvOlQylNhV4',
                     github_token: profile.github_token || '',
                     github_repo: profile.github_repo || '',
-                    yt_client_id: profile.yt_client_id || '',
-                    yt_client_secret: profile.yt_client_secret || '',
                     yt_refresh_token: profile.yt_refresh_token || '',
                 });
             }
@@ -83,8 +77,6 @@ export default function SettingsPage() {
                 preferred_voice_id: keys.voice_id,
                 github_token: keys.github_token,
                 github_repo: keys.github_repo,
-                yt_client_id: keys.yt_client_id,
-                yt_client_secret: keys.yt_client_secret,
                 yt_refresh_token: keys.yt_refresh_token,
                 updated_at: new Date().toISOString(),
             });
@@ -203,26 +195,6 @@ export default function SettingsPage() {
                             </h2>
 
                             <div className="flex flex-col gap-4">
-                                <div>
-                                    <label className="text-sm text-zinc-500 mb-1 block">YouTube Client ID</label>
-                                    <input
-                                        name="yt_client_id"
-                                        type="text"
-                                        className="input-field"
-                                        value={keys.yt_client_id}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-sm text-zinc-500 mb-1 block">YouTube Client Secret</label>
-                                    <input
-                                        name="yt_client_secret"
-                                        type="password"
-                                        className="input-field"
-                                        value={keys.yt_client_secret}
-                                        onChange={handleInputChange}
-                                    />
-                                </div>
                                 <div>
                                     <label className="text-sm text-zinc-500 mb-1 block">YouTube Refresh Token</label>
                                     <input
