@@ -51,6 +51,8 @@ export default function SettingsPage() {
 
             if (data) {
                 const profile = data as Profile;
+                const tempToken = sessionStorage.getItem('yt_refresh_token');
+
                 setKeys({
                     gemini: profile.gemini_api_key || '',
                     elevenlabs: profile.elevenlabs_api_key || '',
@@ -58,8 +60,12 @@ export default function SettingsPage() {
                     voice_id: profile.preferred_voice_id || 'pqHfZKP75CvOlQylNhV4',
                     github_token: profile.github_token || '',
                     github_repo: profile.github_repo || '',
-                    yt_refresh_token: profile.yt_refresh_token || '',
+                    yt_refresh_token: tempToken || profile.yt_refresh_token || '',
                 });
+
+                if (tempToken) {
+                    sessionStorage.removeItem('yt_refresh_token');
+                }
             }
         }
         loadProfile();
@@ -196,14 +202,25 @@ export default function SettingsPage() {
 
                             <div className="flex flex-col gap-4">
                                 <div>
-                                    <label className="text-sm text-zinc-500 mb-1 block">YouTube Refresh Token</label>
-                                    <input
-                                        name="yt_refresh_token"
-                                        type="password"
-                                        className="input-field"
-                                        value={keys.yt_refresh_token}
-                                        onChange={handleInputChange}
-                                    />
+                                    <label className="text-sm text-zinc-500 mb-1 block">Status do Canal</label>
+                                    <div className="flex items-center justify-between p-4 bg-zinc-900/50 border border-white/5 rounded-xl">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-3 h-3 rounded-full ${keys.yt_refresh_token ? 'bg-green-500' : 'bg-red-500'} animate-pulse`}></div>
+                                            <span className="font-medium text-sm">
+                                                {keys.yt_refresh_token ? 'Canal Conectado e Autorizado' : 'Nenhum canal vinculado'}
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => window.location.href = '/api/youtube/auth'}
+                                            className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-bold transition-colors"
+                                        >
+                                            {keys.yt_refresh_token ? 'Reconectar Canal' : 'Vincular YouTube'}
+                                        </button>
+                                    </div>
+                                    {keys.yt_refresh_token && (
+                                        <p className="text-xs text-green-500/80 mt-2 ml-1">✓ Token de renovação capturado em segurança.</p>
+                                    )}
                                 </div>
                             </div>
                         </div>

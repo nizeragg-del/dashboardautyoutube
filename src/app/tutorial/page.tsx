@@ -64,13 +64,12 @@ export default function TutorialPage() {
             title: '4. Integração Definitiva com YouTube',
             icon: <Youtube className="text-[#FF0000]" size={32} />,
             steps: [
-                'Va no Google Cloud Console (console.cloud.google.com).',
-                'Crie um Projeto. Na biblioteca (Library), ative "YouTube Data API v3".',
-                'Em "Credenciais", crie um novo "OAuth Client ID" (App Web). Configure "http://localhost:3000" como Origem JavaScript autorizada e URI de redirecionamento para facilitar os testes.',
-                'Copie o Client ID e Client Secret. Use um script Python local simples para pegar o Refresh Token (não expira).',
-                'Anotamos o Refresh Token para a máquina nunca parar de apostar automaticamente.'
+                'Nosso sistema utiliza uma autenticação segura 1-Click com o Google.',
+                'Você não precisa criar projetos no Google Cloud ou lidar com chaves complexas.',
+                'Basta clicar no botão abaixo, escolher o seu canal e aprovar a permissão de publicação.',
+                'O sistema guardará o acesso de forma segura para postar automaticamente pelos robôs.'
             ],
-            link: 'https://console.cloud.google.com/apis/library/youtube.googleapis.com'
+            isOAuthButton: true
         }
     ];
 
@@ -130,14 +129,23 @@ export default function TutorialPage() {
                                 ))}
                             </ul>
 
-                            <a
-                                href={section.link}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center justify-center gap-2 w-full py-4 mt-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 transition-all text-sm font-bold tracking-wide"
-                            >
-                                Acessar Painel <ExternalLink size={16} />
-                            </a>
+                            {section.isOAuthButton ? (
+                                <button
+                                    onClick={() => window.location.href = '/api/youtube/auth'}
+                                    className="flex items-center justify-center gap-2 w-full py-4 mt-4 rounded-xl bg-[#FF0000]/10 hover:bg-[#FF0000]/20 text-[#FF0000] border border-[#FF0000]/20 transition-all text-sm font-bold tracking-wide"
+                                >
+                                    <Youtube size={16} /> Vincular meu Canal do YouTube
+                                </button>
+                            ) : (
+                                <a
+                                    href={section.link}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center justify-center gap-2 w-full py-4 mt-4 rounded-xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/5 transition-all text-sm font-bold tracking-wide"
+                                >
+                                    Acessar Painel <ExternalLink size={16} />
+                                </a>
+                            )}
                         </div>
                     ))}
                 </div>
