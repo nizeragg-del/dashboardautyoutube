@@ -115,6 +115,8 @@ export default function SchedulerPage() {
     };
 
 
+    // Filtra os vídeos já agendados/publicados para mostrar no calendário
+    const scheduledVideos = videos.filter(v => v.scheduled_for);
 
     if (!isMounted) return null;
 
