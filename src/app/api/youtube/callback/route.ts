@@ -39,9 +39,9 @@ export async function GET(request: Request) {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: new URLSearchParams({
-                code,
-                client_id: clientId,
-                client_secret: clientSecret,
+                code: code as string,
+                client_id: clientId as string,
+                client_secret: clientSecret as string,
                 redirect_uri: redirectUri,
                 grant_type: 'authorization_code',
             }),
