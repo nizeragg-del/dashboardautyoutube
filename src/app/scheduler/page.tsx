@@ -190,10 +190,10 @@ export default function SchedulerPage() {
                         <div className="flex flex-col gap-2">
                             <label className="text-sm font-bold text-zinc-400">Horário de Publicação (Local)</label>
                             <input
-                                type="time"
-                                value={timeOfDay}
-                                onChange={(e) => setTimeOfDay(e.target.value)}
-                                className="w-full bg-zinc-900 border border-white/10 rounded-xl p-4 text-white focus:outline-none focus:border-[#FF0000] focus:ring-1 focus:ring-[#FF0000] transition-all"
+                                type="text"
+                                value="08:00"
+                                readOnly
+                                className="w-full bg-zinc-900/50 border border-white/10 rounded-xl p-4 text-zinc-500 cursor-not-allowed focus:outline-none transition-all"
                             />
                         </div>
 
