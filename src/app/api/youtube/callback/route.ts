@@ -22,8 +22,14 @@ export async function GET(request: Request) {
 
     const redirectUri = `${origin}/api/youtube/callback`;
 
-    if (!clientId || !clientSecret || !supabaseUrl || !supabaseServiceKey) {
-        return new NextResponse('Configuração de servidor incompleta.', { status: 500 });
+    const missing = [];
+    if (!clientId) missing.push('YOUTUBE_CLIENT_ID');
+    if (!clientSecret) missing.push('YOUTUBE_CLIENT_SECRET');
+    if (!supabaseUrl) missing.push('NEXT_PUBLIC_SUPABASE_URL');
+    if (!supabaseServiceKey) missing.push('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (missing.length > 0) {
+        return new NextResponse(`Configuração de servidor incompleta. Faltam: ${missing.join(', ')}`, { status: 500 });
     }
 
     try {
