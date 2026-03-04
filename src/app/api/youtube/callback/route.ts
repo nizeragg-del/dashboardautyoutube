@@ -1,19 +1,28 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 
 export async function GET(request: Request) {
     const url = new URL(request.url);
     const code = url.searchParams.get('code');
+    const userId = url.searchParams.get('state'); // O userId foi passado como 'state' no auth route
     const origin = url.origin;
 
     if (!code) {
         return new NextResponse('Código não fornecido', { status: 400 });
     }
 
+    if (!userId) {
+        return new NextResponse('User ID não recebido no callback', { status: 400 });
+    }
+
     const clientId = process.env.YOUTUBE_CLIENT_ID;
     const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
     const redirectUri = `${origin}/api/youtube/callback`;
 
-    if (!clientId || !clientSecret) {
+    if (!clientId || !clientSecret || !supabaseUrl || !supabaseServiceKey) {
         return new NextResponse('Configuração de servidor incompleta.', { status: 500 });
     }
 
@@ -43,7 +52,20 @@ export async function GET(request: Request) {
 
         if (!refreshToken) {
             // Se o usuário não marcou 'consent' na primeira vez, ou já autorizou antes sem revogar, o Google não envia refresh token novamente.
-            return new NextResponse('Nenhum refresh_token retornado. Por favor, revogue o acesso na sua conta Google e tente novamente, garantindo as permissões completas.', { status: 400 });
+            return new NextResponse('Nenhum refresh_token retornado. Por favor, revogue o acesso do app na sua conta Google e tente novamente.', { status: 400 });
+        }
+
+        // Salvar diretamente no Supabase usando a Service Role Key para ignorar RLS nas rotas de API
+        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+        const { error: dbError } = await supabaseAdmin
+            .from('profiles')
+            .update({ yt_refresh_token: refreshToken })
+            .eq('id', userId);
+
+        if (dbError) {
+            console.error('Erro ao salvar token no banco:', dbError);
+            return new NextResponse('Erro ao salvar o canal no banco de dados.', { status: 500 });
         }
 
         const htmlResponse = `
@@ -53,14 +75,18 @@ export async function GET(request: Request) {
                 <meta charset="UTF-8">
                 <title>Autenticação do YouTube</title>
                 <style>
-                    body { background: #050505; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; }
+                    body { background: #050505; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; font-family: sans-serif; }
+                    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #FF0000; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin-bottom: 20px; }
+                    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
                 </style>
             </head>
             <body>
-                <div>Conectando seu canal...</div>
+                <div class="loader"></div>
+                <div>Canal vinculado com sucesso! Redirecionando...</div>
                 <script>
-                    sessionStorage.setItem('yt_refresh_token', '${refreshToken}');
-                    window.location.href = '/settings?oauth=success';
+                    setTimeout(() => {
+                        window.location.href = '/settings?oauth=success';
+                    }, 1500);
                 </script>
             </body>
             </html>

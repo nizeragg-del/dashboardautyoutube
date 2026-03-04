@@ -51,8 +51,6 @@ export default function SettingsPage() {
 
             if (data) {
                 const profile = data as Profile;
-                const tempToken = sessionStorage.getItem('yt_refresh_token');
-
                 setKeys({
                     gemini: profile.gemini_api_key || '',
                     elevenlabs: profile.elevenlabs_api_key || '',
@@ -60,12 +58,8 @@ export default function SettingsPage() {
                     voice_id: profile.preferred_voice_id || 'pqHfZKP75CvOlQylNhV4',
                     github_token: profile.github_token || '',
                     github_repo: profile.github_repo || '',
-                    yt_refresh_token: tempToken || profile.yt_refresh_token || '',
+                    yt_refresh_token: profile.yt_refresh_token || '',
                 });
-
-                if (tempToken) {
-                    sessionStorage.removeItem('yt_refresh_token');
-                }
             }
         }
         loadProfile();
@@ -212,7 +206,13 @@ export default function SettingsPage() {
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={() => window.location.href = '/api/youtube/auth'}
+                                            onClick={() => {
+                                                if (user?.id) {
+                                                    window.location.href = `/api/youtube/auth?userId=${user.id}`;
+                                                } else {
+                                                    alert("Aguarde o carregamento do usuário...");
+                                                }
+                                            }}
                                             className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-xs font-bold transition-colors"
                                         >
                                             {keys.yt_refresh_token ? 'Reconectar Canal' : 'Vincular YouTube'}
