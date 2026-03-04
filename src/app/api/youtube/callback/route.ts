@@ -62,7 +62,7 @@ export async function GET(request: Request) {
         }
 
         // Salvar diretamente no Supabase usando a Service Role Key para ignorar RLS nas rotas de API
-        const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+        const supabaseAdmin = createClient(supabaseUrl as string, supabaseServiceKey as string);
 
         const { error: dbError } = await supabaseAdmin
             .from('profiles')
